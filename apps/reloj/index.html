@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#7465cc" />
+  <meta name="app-emoji" content="🕐">
+  <meta name="description" content="Aprendé a leer la hora jugando. Mové las agujas del reloj y resolvé desafíos." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Aprendé la hora" />
+  <title>Aprendé la hora jugando</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f3fc;
+      --card: #fff;
+      --panel: #f8f7fe;
+      --border: #e3e0f0;
+      --text: #302a48;
+      --muted: #726b88;
+      --accent: #7465cc;
+      --accent-bg: #efecff;
+      --hour: #3479e8;
+      --minute: #f06553;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #151420;
+        --card: #242233;
+        --panel: #2e2b42;
+        --border: #443f59;
+        --text: #f7f4ff;
+        --muted: #c0b9d1;
+        --accent: #9587f2;
+        --accent-bg: #373154;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; min-height: 100dvh; background: var(--bg); color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .app { max-width: 700px; margin: auto; padding: max(68px, calc(env(safe-area-inset-top) + 54px)) 12px max(28px,env(safe-area-inset-bottom)); }
+    .home-link { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); z-index: 100; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--border); border-radius: 15px; background: var(--card); box-shadow: 0 3px 12px rgba(30, 22, 67, .12); font-size: 25px; text-decoration: none; }
+    .home-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .app-header { text-align: center; margin-bottom: 16px; }
+    .app-title { font-size: clamp(23px, 6.5vw, 29px); font-weight: 850; letter-spacing: -.6px; }
+    .small { font-size: 13px; color: var(--muted); line-height: 1.45; }
+    .app-header .small { margin-top: 4px; }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 14px; box-shadow: 0 3px 14px rgba(64,45,118,.035); }
+    .stack { display: grid; gap: 12px; }
+    button { cursor: pointer; font-family: inherit; font-weight: 750; transition: transform .1s, background .15s; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(.96); }
+    button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .tabs { display: flex; gap: 8px; }
+    .tab { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 12px; padding: 11px 12px; font-size: 14px; flex: 1; }
+    .tab.active { background: var(--accent-bg); color: var(--text); border: 2px solid var(--accent); padding: 10px 11px; }
+    .face { width: 100%; max-width: 370px; display: block; margin: 0 auto; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .hand { cursor: grab; touch-action: none; }
+    .hand:active { cursor: grabbing; }
+    .clock-question { text-align: center; min-height: 81px; }
+    .digital { font-size: clamp(32px, 8vw, 49px); font-weight: 850; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+    .time-words { font-size: 16px; font-weight: 700; }
+    .legend { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: -7px; }
+    .chip { border-radius: 8px; padding: 5px 8px; font-weight: 750; font-size: 12px; white-space: nowrap; }
+    .chip-hour { background: #e1edff; color: #215fb4; }
+    .chip-minute { background: #ffe6e0; color: #c44c3c; }
+    .tip { text-align: center; margin-top: 9px; }
+    .controls { display: grid; gap: 8px; margin-top: 12px; }
+    .control { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--panel); border-radius: 13px; padding: 10px; }
+    .control-name { font-size: 14px; font-weight: 700; }
+    .control-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .control-value { min-width: 24px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .adjust { border: 1px solid var(--border); background: var(--card); border-radius: 11px; min-width: 44px; height: 40px; font-size: 22px; color: var(--text); }
+    .mainbtn { background: var(--accent); color: #fff; border: 0; border-radius: 13px; padding: 12px 18px; min-height: 46px; }
+    .secbtn { border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 13px; padding: 11px 16px; min-height: 44px; }
+    .info-title { font-weight: 750; margin-bottom: 9px; }
+    .examples { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+    .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    #challenge-feedback { font-size: 15px; min-height: 23px; margin-bottom: 12px; }
+    #challenge-score { margin-top: 11px; }
+    .animate-good { animation: pop .35s ease-out; }
+    @keyframes pop { 0%{transform:scale(.95)}65%{transform:scale(1.05)}100%{transform:scale(1)} }
+    [hidden] { display: none !important; }
+    @media (max-width: 380px) {
+      .control { padding: 9px 7px; }
+      .control-name { font-size: 12.5px; }
+      .control-name .small { font-size: 11px; }
+      .adjust { min-width: 38px; height: 39px; }
+      .panel { padding: 12px 10px; }
+      .secbtn { padding: 10px 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) { button { transition: none; } .animate-good { animation: none; } }
+  </style>
+</head>
+<body>
+<a class="home-link" href="../../" aria-label="Volver al inicio" title="Volver al inicio">🏠</a>
+<main class="app stack" id="reloj-nina">
+  <header class="app-header">
+    <div class="app-title">🕒 ¡Aprendamos la hora!</div>
+    <div class="small">Tocá y arrastrá las agujas del reloj.</div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Modo de juego">
+    <button class="tab active" id="tab-explore" data-mode="explore" type="button" role="tab" aria-selected="true" aria-controls="explore-info">👆 Explorar</button>
+    <button class="tab" id="tab-challenge" data-mode="challenge" type="button" role="tab" aria-selected="false" aria-controls="challenge-info">⭐ Desafíos</button>
+  </nav>
+
+  <section class="panel" aria-label="Reloj interactivo">
+    <div id="reloj-task" class="clock-question" aria-live="polite" aria-atomic="true">
+      <div id="question-lead" class="small">¿Qué hora es?</div>
+      <div id="reloj-digital" class="digital">03:00</div>
+      <div id="reloj-words" class="time-words">Las tres en punto</div>
+    </div>
+    <svg id="reloj-face" class="face" viewBox="0 0 400 400" role="img" aria-label="Reloj analógico: mové con el dedo la aguja azul de horas o la roja de minutos">
+      <defs><filter id="clockshadow"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".12" /></filter></defs>
+      <circle cx="200" cy="200" r="172" fill="#d9d4f7" filter="url(#clockshadow)" />
+      <circle cx="200" cy="200" r="162" fill="#fffefa" stroke="#aaa1df" stroke-width="2" />
+      <g id="r-ticks"></g>
+      <g id="r-nums"></g>
+      <g id="r-hour" class="hand">
+        <line x1="200" y1="200" x2="200" y2="107" stroke="#3479e8" stroke-width="17" stroke-linecap="round" />
+        <line x1="200" y1="200" x2="200" y2="107" stroke="transparent" stroke-width="44" stroke-linecap="round" />
+      </g>
+      <g id="r-minute" class="hand">
+        <line x1="200" y1="221" x2="200" y2="69" stroke="#f06553" stroke-width="10" stroke-linecap="round" />
+        <line x1="200" y1="200" x2="200" y2="69" stroke="transparent" stroke-width="37" stroke-linecap="round" />
+      </g>
+      <circle cx="200" cy="200" r="12" fill="#353048" stroke="white" stroke-width="4" />
+    </svg>
+    <div class="legend" aria-label="Referencias de colores">
+      <span class="chip chip-hour">● Azul: horas</span>
+      <span class="chip chip-minute">● Roja: minutos</span>
+    </div>
+    <div class="small tip">También podés usar los botones para moverlas.</div>
+    <div class="controls">
+      <div class="control">
+        <div class="control-name">🔵 Aguja corta <span class="small">(hora)</span></div>
+        <div class="control-actions">
+          <button class="adjust" id="hour-minus" type="button" aria-label="Restar una hora">−</button>
+          <span class="control-value" id="hour-value" aria-live="off">3</span>
+          <button class="adjust" id="hour-plus" type="button" aria-label="Sumar una hora">+</button>
+        </div>
+      </div>
+      <div class="control">
+        <div class="control-name">🔴 Aguja larga <span class="small">(minutos)</span></div>
+        <div class="control-actions">
+          <button class="adjust" id="minute-minus" type="button" aria-label="Restar cinco minutos">−</button>
+          <span class="control-value" id="minute-value" aria-live="off">00</span>
+          <button class="adjust" id="minute-plus" type="button" aria-label="Sumar cinco minutos">+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="explore-info" class="panel" style="text-align:center" aria-label="Truco y ejemplos">
+    <div class="info-title">💡 Un truco para aprender</div>
+    <div class="small">Cada número que avanza la aguja roja son <strong>5 minutos</strong>. El 3 marca 15 minutos, el 6 marca 30 y el 9 marca 45.</div>
+    <div class="examples">
+      <button class="secbtn" type="button" data-time="3:00">En punto</button>
+      <button class="secbtn" type="button" data-time="3:15">Y cuarto</button>
+      <button class="secbtn" type="button" data-time="3:30">Y media</button>
+      <button class="secbtn" type="button" data-time="2:45">Menos cuarto</button>
+    </div>
+  </section>
+
+  <section id="challenge-info" class="panel" style="text-align:center" aria-label="Desafíos" hidden>
+    <div id="challenge-feedback" role="status" aria-live="polite">Poné las agujas en la hora indicada.</div>
+    <div class="actions">
+      <button id="check-answer" class="mainbtn" type="button">Comprobar ✓</button>
+      <button id="next-challenge" class="secbtn" type="button">Otro desafío →</button>
+    </div>
+    <div id="challenge-score" class="small">⭐ 0 desafíos resueltos</div>
+  </section>
+</main>
+<script>
+  (() => {
+    'use strict';
+    const root = document.getElementById('reloj-nina');
+    const $ = id => document.getElementById(id);
+
+    // ---- Niveles: se generan al azar y suben solos con 3 aciertos ----
+    const LEVELS = [
+      { minutes: [0] },                                    // 1: en punto
+      { minutes: [30] },                                   // 2: y media
+      { minutes: [15, 45] },                               // 3: y cuarto / menos cuarto
+      { minutes: [5,10,15,20,25,35,40,45,50,55] }          // 4: de a 5 minutos
+    ];
+    const PER_LEVEL = 3;
+    const STORE_KEY = 'learning-tools:reloj:v1';
+
+    let h = 3, m = 0, mode = 'explore', correct = false, target = null;
+    let progress = { level: 0, inLevel: 0, solved: 0 };
+
+    function loadProgress() {
+      try {
+        if (new URLSearchParams(location.search).has('reset')) localStorage.removeItem(STORE_KEY);
+        const p = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (p && Number.isInteger(p.level) && Number.isInteger(p.inLevel) && Number.isInteger(p.solved)) {
+          progress = {
+            level: Math.min(Math.max(p.level, 0), LEVELS.length - 1),
+            inLevel: Math.min(Math.max(p.inLevel, 0), PER_LEVEL),
+            solved: Math.max(p.solved, 0)
+          };
+        }
+      } catch (e) { /* sin storage: arranca de cero */ }
+    }
+    function saveProgress() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) {}
+    }
+
+    const names = ['doce','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once'];
+    const pad = n => String(n).padStart(2, '0');
+    const displayHour = n => n === 0 ? 12 : n;
+
+    function words() {
+      const a = names[h], b = names[(h+1)%12];
+      if(m===0) return (h===1?'La ':'Las ')+a+' en punto';
+      if(m===15) return (h===1?'La ':'Las ')+a+' y cuarto';
+      if(m===30) return (h===1?'La ':'Las ')+a+' y media';
+      if(m===45) return ((h+1)%12===1?'La ':'Las ')+b+' menos cuarto';
+      if(m<30) return (h===1?'La ':'Las ')+a+' y '+m;
+      return ((h+1)%12===1?'La ':'Las ')+b+' menos '+(60-m);
+    }
+
+    // Consigna del desafío: "las 4 en punto", "la 1 y media", "las 6 menos 10"...
+    function targetName(t) {
+      let hour, rest;
+      if (t.m <= 30) {
+        hour = displayHour(t.h);
+        rest = t.m === 0 ? ' en punto' : t.m === 15 ? ' y cuarto' : t.m === 30 ? ' y media' : ' y ' + t.m;
+      } else {
+        hour = displayHour((t.h + 1) % 12);
+        rest = t.m === 45 ? ' menos cuarto' : ' menos ' + (60 - t.m);
+      }
+      return (hour === 1 ? 'la ' : 'las ') + hour + rest;
+    }
+
+    function newTarget() {
+      const mins = LEVELS[progress.level].minutes;
+      let t;
+      do {
+        t = { h: Math.floor(Math.random() * 12), m: mins[Math.floor(Math.random() * mins.length)] };
+      } while ((t.h === 0 && t.m === 0) ||                       // 12:00 es donde arranca el reloj
+               (target && t.h === target.h && t.m === target.m)); // no repetir la anterior
+      target = t;
+    }
+
+    function startChallenge(message) {
+      newTarget();
+      correct = false;
+      const feedback = $('challenge-feedback');
+      feedback.textContent = message;
+      feedback.style.fontWeight = '';
+      setTime(12, 0);
+    }
+
+    function setTime(hh,mm) { h=((hh%12)+12)%12; m=((mm%60)+60)%60; render(); }
+    function moveMinutes(n) {
+      const total = ((h*60+m+n)%720+720)%720;
+      setTime(Math.floor(total/60), total%60);
+    }
+
+    function levelLabel() {
+      const n = progress.level + 1;
+      if (progress.level === LEVELS.length - 1) return 'Nivel ' + n + ' de ' + LEVELS.length + ' · ¡el más difícil!';
+      return 'Nivel ' + n + ' de ' + LEVELS.length + ' · ' +
+        '●'.repeat(progress.inLevel) + '○'.repeat(PER_LEVEL - progress.inLevel);
+    }
+    function scoreLabel() {
+      return '⭐ ' + progress.solved + (progress.solved === 1 ? ' desafío resuelto' : ' desafíos resueltos');
+    }
+
+    function render() {
+      $('r-hour').setAttribute('transform','rotate('+(h*30+m*.5)+' 200 200)');
+      $('r-minute').setAttribute('transform','rotate('+(m*6)+' 200 200)');
+      // En desafíos se ocultan los números para que lea el reloj y no los botones.
+      $('hour-value').textContent = mode==='challenge' ? '?' : displayHour(h);
+      $('minute-value').textContent = mode==='challenge' ? '?' : pad(m);
+      const digital=$('reloj-digital');
+      if(mode==='explore') {
+        digital.textContent=pad(displayHour(h))+':'+pad(m);
+        digital.style.fontSize='';
+        $('reloj-words').textContent=words();
+        $('question-lead').textContent='¿Qué hora es?';
+      } else {
+        digital.textContent='¿'+targetName(target)+'?';
+        digital.style.fontSize='clamp(20px, 5.2vw, 28px)';
+        $('reloj-words').textContent='¡Mové las agujas para lograrlo!';
+        $('question-lead').textContent=levelLabel();
+      }
+      $('challenge-score').textContent = scoreLabel();
+    }
+
+    // Pista según el error, para que entienda qué corregir.
+    function hint() {
+      const hourOk = h === target.h, minuteOk = m === target.m;
+      if (m === (target.h * 5) % 60 && h === (target.m / 5) % 12)
+        return '🔄 ¡Ojo! Están al revés: la azul (corta) marca la hora y la roja (larga) los minutos.';
+      if (minuteOk && target.m > 30 && h === (target.h + 1) % 12)
+        return '👍 La roja está perfecta. Con «menos», todavía no llegó a las ' + displayHour(h) +
+               ': la azul queda un poquito antes del ' + displayHour(h) + '.';
+      if (minuteOk) return '👍 La aguja roja está perfecta. Ahora acomodá la azul.';
+      if (hourOk) return '👍 La aguja azul está perfecta. Ahora acomodá la roja.';
+      return '💪 ¡Casi! Mirá dónde están las agujas y probá otra vez.';
+    }
+
+    const ticks=$('r-ticks'), nums=$('r-nums');
+    let tickMarkup='', numMarkup='';
+    for(let i=0;i<60;i++) {
+      const a=i*Math.PI/30, major=i%5===0, r1=major?145:151, r2=158;
+      tickMarkup+='<line x1="'+(200+Math.sin(a)*r1)+'" y1="'+(200-Math.cos(a)*r1)+'" x2="'+(200+Math.sin(a)*r2)+'" y2="'+(200-Math.cos(a)*r2)+'" stroke="'+(major?'#71659d':'#aea9b9')+'" stroke-width="'+(major?3.4:1.5)+'" stroke-linecap="round"/>';
+    }
+    for(let i=1;i<=12;i++) {
+      const a=i*Math.PI/6;
+      numMarkup+='<text x="'+(200+Math.sin(a)*121)+'" y="'+(200-Math.cos(a)*121+2)+'" fill="#28223c" font-weight="800" font-size="28" text-anchor="middle" dominant-baseline="central">'+i+'</text>';
+    }
+    ticks.innerHTML=tickMarkup; nums.innerHTML=numMarkup;
+    const face=$('reloj-face');
+    let drag=null;
+    function pointerAngle(evt) {
+      const rect=face.getBoundingClientRect();
+      const x=(evt.clientX-rect.left)*400/rect.width-200;
+      const y=(evt.clientY-rect.top)*400/rect.height-200;
+      return ((Math.atan2(x,-y)*180/Math.PI)+360)%360;
+    }
+    function applyDrag(evt) {
+      const a=pointerAngle(evt);
+      if(drag==='minute') {
+        const val=Math.round(a/30)*5%60;
+        if(val!==m)moveMinutes(((val-m+90)%60)-30);
+      } else if(drag==='hour') {
+        const nearest=Math.round((a-m*.5)/30);
+        setTime(nearest,m);
+      }
+    }
+    function nearestHand(evt) {
+      const a=pointerAngle(evt);
+      const distance=(x,y)=>Math.abs(((x-y+540)%360)-180);
+      return distance(a,h*30+m*.5)<distance(a,m*6)?'hour':'minute';
+    }
+    // Elige qué aguja agarró. Si están superpuestas (ej. a las 12:00), cerca del
+    // centro agarra la azul (corta) y más afuera la roja (larga).
+    function pickHand(evt) {
+      const rect=face.getBoundingClientRect();
+      const x=(evt.clientX-rect.left)*400/rect.width-200;
+      const y=(evt.clientY-rect.top)*400/rect.height-200;
+      const r=Math.hypot(x,y), a=pointerAngle(evt);
+      const angDist=(p,q)=>Math.abs(((p-q+540)%360)-180);
+      const hourA=h*30+m*.5, minA=m*6;
+      const dH=angDist(a,hourA), dM=angDist(a,minA);
+      const hourHit = r<=118 && dH<90 && r*Math.sin(dH*Math.PI/180)<=26;
+      const minHit  = r<=170 && dM<90 && r*Math.sin(dM*Math.PI/180)<=24;
+      if(hourHit&&minHit) {
+        if(angDist(hourA,minA)<20) return r<=100?'hour':'minute';
+        return dH<dM?'hour':'minute';
+      }
+      if(hourHit) return 'hour';
+      if(minHit) return 'minute';
+      return nearestHand(evt);
+    }
+    face.addEventListener('pointerdown',evt=>{
+      if(evt.button!==undefined&&evt.button!==0)return;
+      drag=pickHand(evt);
+      face.setPointerCapture(evt.pointerId);
+      applyDrag(evt);
+    });
+    face.addEventListener('pointermove',evt=>{ if(drag)applyDrag(evt); });
+    face.addEventListener('pointerup',()=>{drag=null;});
+    face.addEventListener('pointercancel',()=>{drag=null;});
+    face.addEventListener('lostpointercapture',()=>{drag=null;});
+    $('hour-minus').addEventListener('click',()=>setTime(h-1,m));
+    $('hour-plus').addEventListener('click',()=>setTime(h+1,m));
+    $('minute-minus').addEventListener('click',()=>moveMinutes(-5));
+    $('minute-plus').addEventListener('click',()=>moveMinutes(5));
+    root.querySelectorAll('[data-time]').forEach(btn=>btn.addEventListener('click',()=>{
+      const [hh,mm]=btn.dataset.time.split(':').map(Number);
+      setTime(hh,mm);
+    }));
+    root.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+      mode=btn.dataset.mode;
+      root.querySelectorAll('[data-mode]').forEach(b=>{
+        b.classList.toggle('active',b===btn);
+        b.setAttribute('aria-selected',String(b===btn));
+      });
+      $('explore-info').hidden=mode!=='explore';
+      $('challenge-info').hidden=mode!=='challenge';
+      if(mode==='challenge') startChallenge('Poné las agujas en la hora indicada.');
+      else render();
+    }));
+    $('check-answer').addEventListener('click',()=>{
+      const success = h===target.h && m===target.m;
+      const feedback=$('challenge-feedback');
+      feedback.style.fontWeight='800';
+      if(!success) { feedback.textContent=hint(); return; }
+      if(correct) { feedback.textContent='🎉 ¡Ya lo lograste! Tocá «Otro desafío» para seguir.'; return; }
+      correct=true;
+      progress.solved++;
+      let levelUp=false;
+      if(progress.level < LEVELS.length-1) {
+        progress.inLevel++;
+        if(progress.inLevel >= PER_LEVEL) { progress.level++; progress.inLevel=0; levelUp=true; }
+      }
+      saveProgress();
+      feedback.textContent = levelUp
+        ? '🏆 ¡Excelente! ¡Subiste al nivel '+(progress.level+1)+'! Tocá «Otro desafío».'
+        : '🎉 ¡Excelente! ¡Lo lograste! Tocá «Otro desafío» para seguir.';
+      feedback.classList.remove('animate-good');
+      void feedback.offsetWidth;
+      feedback.classList.add('animate-good');
+      if('vibrate' in navigator) navigator.vibrate(levelUp ? [40,60,40] : 30);
+      render();
+    });
+    $('next-challenge').addEventListener('click',()=>startChallenge('¡A buscar esta nueva hora!'));
+
+    loadProgress();
+    render();
+  })();
+</script>
+</body>
+</html>
